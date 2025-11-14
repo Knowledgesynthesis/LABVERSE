@@ -108,12 +108,12 @@ export function Lesson() {
 
       case 'callout':
         const calloutColors = {
-          info: 'bg-blue-500/10 border-blue-500/50 text-blue-950 dark:text-blue-100',
-          warning: 'bg-yellow-500/10 border-yellow-500/50 text-yellow-950 dark:text-yellow-100',
-          success: 'bg-green-500/10 border-green-500/50 text-green-950 dark:text-green-100',
-          error: 'bg-red-500/10 border-red-500/50 text-red-950 dark:text-red-100',
+          info: 'bg-blue-500/10 border-blue-500/50 text-slate-900 dark:text-blue-100',
+          warning: 'bg-yellow-500/10 border-yellow-500/50 text-slate-900 dark:text-yellow-100',
+          success: 'bg-green-500/10 border-green-500/50 text-slate-900 dark:text-green-100',
+          error: 'bg-red-500/10 border-red-500/50 text-slate-900 dark:text-red-100',
           'clinical-pearl':
-            'bg-purple-500/10 border-purple-500/50 text-purple-950 dark:text-purple-100',
+            'bg-purple-500/10 border-purple-500/50 text-slate-900 dark:text-purple-100',
         };
 
         return (
