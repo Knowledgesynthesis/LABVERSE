@@ -8,7 +8,7 @@ import { Glossary } from './screens/Glossary';
 import { Settings } from './screens/Settings';
 import { Progress } from './screens/Progress';
 import { CasesList, CaseDetail } from './screens/Cases';
-import { InteractivesList, ElectrolyteDynamics } from './screens/Interactives';
+import { InteractivesList, ElectrolyteDynamics, AcidBaseSimulator, RenalHandlingModel } from './screens/Interactives';
 
 function App() {
   return (
@@ -24,6 +24,14 @@ function App() {
             <Route
               path="/interactives/electrolyte-dynamics"
               element={<ElectrolyteDynamics />}
+            />
+            <Route
+              path="/interactives/acid-base-simulator"
+              element={<AcidBaseSimulator />}
+            />
+            <Route
+              path="/interactives/renal-handling"
+              element={<RenalHandlingModel />}
             />
             <Route path="/cases" element={<CasesList />} />
             <Route path="/cases/:caseId" element={<CaseDetail />} />
