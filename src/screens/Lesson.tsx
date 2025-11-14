@@ -38,20 +38,20 @@ export function Lesson() {
       case 'heading':
         if (content.level === 1) {
           return (
-            <h1 key={index} className="text-3xl font-bold mt-8 mb-4">
+            <h1 key={index} className="text-3xl font-bold mt-8 mb-4 text-foreground">
               {content.content as string}
             </h1>
           );
         }
         return (
-          <h2 key={index} className="text-2xl font-semibold mt-6 mb-3">
+          <h2 key={index} className="text-2xl font-semibold mt-6 mb-3 text-foreground">
             {content.content as string}
           </h2>
         );
 
       case 'text':
         return (
-          <p key={index} className="text-base leading-relaxed mb-4">
+          <p key={index} className="text-base leading-relaxed mb-4 text-foreground">
             {content.content as string}
           </p>
         );
@@ -60,7 +60,7 @@ export function Lesson() {
         return (
           <ul key={index} className="list-disc list-inside space-y-2 mb-4 ml-4">
             {(content.content as string[]).map((item, i) => (
-              <li key={i} className="text-base">
+              <li key={i} className="text-base text-foreground">
                 {item}
               </li>
             ))}
@@ -77,7 +77,7 @@ export function Lesson() {
                   {tableContent.headers.map((header, i) => (
                     <th
                       key={i}
-                      className="border border-border px-4 py-2 text-left font-semibold"
+                      className="border border-border px-4 py-2 text-left font-semibold text-foreground"
                     >
                       {header}
                     </th>
@@ -88,7 +88,7 @@ export function Lesson() {
                 {tableContent.rows.map((row, i) => (
                   <tr key={i} className="hover:bg-muted/50">
                     {row.map((cell, j) => (
-                      <td key={j} className="border border-border px-4 py-2">
+                      <td key={j} className="border border-border px-4 py-2 text-foreground">
                         {cell}
                       </td>
                     ))}
@@ -101,7 +101,7 @@ export function Lesson() {
 
       case 'formula':
         return (
-          <div key={index} className="bg-muted p-4 rounded-lg mb-4 font-mono text-center">
+          <div key={index} className="bg-muted text-foreground p-4 rounded-lg mb-4 font-mono text-center">
             {content.content as string}
           </div>
         );
