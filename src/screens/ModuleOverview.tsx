@@ -1,195 +1,178 @@
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, BookOpen, FlaskConical, FileText, CheckCircle2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { modules, lessons, cases } from '../data';
+import { Link, useParams } from 'react-router-dom';
+import { BrainCircuit, CheckCircle2, Circle, Clock, FlaskConical, OctagonAlert, Stethoscope } from 'lucide-react';
+import { caseById, interactiveById, lessonById, moduleById } from '../content';
+import type { ModuleId } from '../types';
 import useAppStore from '../store';
+import { moduleMastery } from '../lib/mastery';
+import { HUE, MODULE_ICON } from '../lib/moduleStyle';
+import { NotFound, PageHeader } from '../components/PageHeader';
+import { Button } from '../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Badge } from '../components/ui/Badge';
+import { ProgressBar } from '../components/ui/ProgressBar';
+import { cn } from '../lib/utils';
 
 export function ModuleOverview() {
   const { moduleId } = useParams();
-  const { progress } = useAppStore();
-
-  const module = modules.find((m) => m.id === moduleId);
-
-  if (!module) {
-    return (
-      <div className="text-center py-12">
-        <h2 className="text-2xl font-bold">Module not found</h2>
-        <Link to="/" className="mt-4 inline-block">
-          <Button variant="outline">Back to Home</Button>
-        </Link>
-      </div>
-    );
-  }
-
-  const moduleLessons = lessons.filter((l) => module.lessons.includes(l.id));
-  const moduleCases = cases.filter((c) => module.cases.includes(c.id));
+  const progress = useAppStore((s) => s.progress);
+  const m = moduleById[moduleId as ModuleId];
+  if (!m) return <NotFound what="Module" />;
+  const Icon = MODULE_ICON[m.id];
+  const hue = HUE[m.hue];
+  const mm = moduleMastery(m, progress);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="space-y-4">
-        <Link to="/">
-          <Button variant="ghost" className="gap-2">
-            <ArrowLeft className="h-4 w-4" /> Back to Home
-          </Button>
-        </Link>
+      <PageHeader
+        back={{ to: '/learn', label: 'Curriculum' }}
+        title={m.title}
+        subtitle={m.description}
+        eyebrow={
+          <span className={cn('inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold', hue.soft, hue.text)}>
+            <Icon className="h-3.5 w-3.5" /> {m.short}
+          </span>
+        }
+        actions={
+          <Link to={`/practice/module/${m.id}`}>
+            <Button>
+              <BrainCircuit className="h-4 w-4" /> Module quiz
+            </Button>
+          </Link>
+        }
+      />
 
-        <div className="flex items-start gap-4">
-          <div className="text-5xl">{module.icon}</div>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-2">{module.title}</h1>
-            <p className="text-lg text-muted-foreground">{module.description}</p>
-            <div className="flex flex-wrap gap-2 mt-4">
-              <Badge>{module.category}</Badge>
-              <Badge variant="outline">{module.estimatedTime} min</Badge>
-              <Badge variant="secondary">{module.bloomLevel}</Badge>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Prerequisites */}
-      {module.prerequisites.length > 0 && (
-        <Card>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle className="text-lg">Prerequisites</CardTitle>
+            <CardTitle className="text-base">By the end you will</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {module.prerequisites.map((prereqId) => {
-                const prereq = modules.find((m) => m.id === prereqId);
-                return prereq ? (
-                  <Link key={prereqId} to={`/modules/${prereqId}`}>
-                    <Badge variant="outline" className="cursor-pointer hover:bg-accent">
-                      {prereq.title}
-                    </Badge>
-                  </Link>
-                ) : null;
-              })}
-            </div>
+            <ul className="space-y-2">
+              {m.outcomes.map((o) => (
+                <li key={o} className="flex gap-2 text-sm">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  {o}
+                </li>
+              ))}
+            </ul>
+            {m.prerequisites.length > 0 && (
+              <p className="mt-4 text-sm text-muted-foreground">
+                Builds on:{' '}
+                {m.prerequisites.map((p, i) => (
+                  <span key={p}>
+                    {i > 0 && ', '}
+                    <Link className="text-primary hover:underline" to={`/modules/${p}`}>
+                      {moduleById[p].title}
+                    </Link>
+                  </span>
+                ))}
+              </p>
+            )}
           </CardContent>
         </Card>
-      )}
-
-      {/* Lessons */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5" />
-          <h2 className="text-2xl font-bold">Lessons</h2>
-        </div>
-
-        <div className="space-y-3">
-          {moduleLessons.map((lesson) => {
-            const isCompleted = progress.lessonsCompleted.includes(lesson.id);
-
-            return (
-              <Link key={lesson.id} to={`/lessons/${lesson.id}`}>
-                <Card className="transition-all hover:shadow-lg hover:border-primary/50">
-                  <CardHeader className="flex flex-row items-start justify-between space-y-0">
-                    <div className="flex-1">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-1">
-                          <CardTitle className="text-lg">{lesson.title}</CardTitle>
-                          <CardDescription className="mt-1">
-                            {lesson.description}
-                          </CardDescription>
-                        </div>
-                        {isCompleted && (
-                          <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        <Badge variant="outline" className="text-xs">
-                          {lesson.estimatedTime} min
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                          {lesson.bloomLevel}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Mastery · {mm.mastery}%</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <Meter label="Lessons" a={mm.lessonsDone} b={mm.lessonsTotal} cls={hue.solid} />
+            <Meter label="Questions correct" a={mm.questionsCorrect} b={mm.questionsTotal} cls={hue.solid} />
+            {mm.casesTotal > 0 && <Meter label="Case score" a={Math.round(mm.casesScore * 100)} b={100} cls={hue.solid} suffix="%" />}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Clinical Cases */}
-      {moduleCases.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            <h2 className="text-2xl font-bold">Clinical Cases</h2>
-          </div>
+      <section>
+        <h2 className="mb-3 text-lg font-semibold">Lessons</h2>
+        <ol className="space-y-2">
+          {m.lessons.map((id, i) => {
+            const l = lessonById[id];
+            const done = !!progress.lessons[id];
+            return (
+              <li key={id}>
+                <Link to={`/lessons/${id}`} className="flex items-center gap-4 rounded-lg border bg-card p-4 hover:bg-accent/40">
+                  <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold', done ? 'bg-success/15 text-success' : 'bg-muted')}>
+                    {done ? <CheckCircle2 className="h-4 w-4" /> : i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{l.title}</p>
+                    <p className="text-sm text-muted-foreground">{l.summary}</p>
+                  </div>
+                  <span className="hidden shrink-0 items-center gap-1 text-xs text-muted-foreground sm:flex">
+                    <Clock className="h-3.5 w-3.5" /> {l.minutes} min
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
 
-          <div className="space-y-3">
-            {moduleCases.map((clinicalCase) => {
-              const isCompleted = progress.casesCompleted.includes(clinicalCase.id);
-
+      {m.cases.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-lg font-semibold">Cases</h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            {m.cases.map((id) => {
+              const c = caseById[id];
+              const r = progress.cases[id];
               return (
-                <Link key={clinicalCase.id} to={`/cases/${clinicalCase.id}`}>
-                  <Card className="transition-all hover:shadow-lg hover:border-primary/50">
-                    <CardHeader className="flex flex-row items-start justify-between space-y-0">
-                      <div className="flex-1">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-1">
-                            <CardTitle className="text-lg">
-                              {clinicalCase.title}
-                            </CardTitle>
-                            {clinicalCase.mustNotMiss && (
-                              <Badge variant="destructive" className="mt-2">
-                                Must Not Miss
-                              </Badge>
-                            )}
-                          </div>
-                          {isCompleted && (
-                            <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-                          )}
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          <Badge variant="outline" className="text-xs">
-                            {clinicalCase.difficulty}
-                          </Badge>
-                          <Badge variant="secondary" className="text-xs">
-                            {clinicalCase.questions.length} questions
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardHeader>
-                  </Card>
+                <Link key={id} to={`/cases/${id}`} className="flex items-start gap-3 rounded-lg border bg-card p-4 hover:bg-accent/40">
+                  <Stethoscope className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{c.title}</p>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      <Badge variant="secondary" className="capitalize">
+                        {c.difficulty}
+                      </Badge>
+                      {c.mustNotMiss && (
+                        <Badge variant="destructive">
+                          <OctagonAlert className="h-3 w-3" /> Must not miss
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  {r ? <span className="text-sm font-semibold text-success tabular">{r.score}/{r.total}</span> : <Circle className="h-4 w-4 text-muted-foreground/50" />}
                 </Link>
               );
             })}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Interactive Simulations */}
-      {module.interactives.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <FlaskConical className="h-5 w-5" />
-            <h2 className="text-2xl font-bold">Interactive Simulations</h2>
+      {m.interactives.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-lg font-semibold">Interactive labs</h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            {m.interactives.map((id) => {
+              const lab = interactiveById[id];
+              return (
+                <Link key={id} to={`/interactives/${id}`} className="flex items-start gap-3 rounded-lg border bg-card p-4 hover:bg-accent/40">
+                  <FlaskConical className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <div>
+                    <p className="font-medium">{lab.title}</p>
+                    <p className="text-sm text-muted-foreground">{lab.summary}</p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
-
-          <Card className="bg-primary/5 border-primary/20">
-            <CardHeader>
-              <CardTitle>Explore Interactive Labs</CardTitle>
-              <CardDescription>
-                Hands-on simulations to reinforce your understanding
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/interactives">
-                <Button>Go to Simulations</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
+        </section>
       )}
+    </div>
+  );
+}
+
+function Meter({ label, a, b, cls, suffix = '' }: { label: string; a: number; b: number; cls: string; suffix?: string }) {
+  return (
+    <div>
+      <div className="mb-1 flex justify-between">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-medium tabular">
+          {a}
+          {suffix ? suffix : `/${b}`}
+        </span>
+      </div>
+      <ProgressBar value={b ? (100 * a) / b : 0} barClass={cls} label={label} />
     </div>
   );
 }

@@ -1,0 +1,120 @@
+import type { GlossaryTerm } from '../types';
+
+const T = (
+  id: string,
+  term: string,
+  category: string,
+  definition: string,
+  clinical: string,
+  related: string[],
+  lessonId?: string,
+  abbr?: string
+): GlossaryTerm => ({ id, term, category, definition, clinical, related, lessonId, abbr });
+
+export const glossaryTerms: GlossaryTerm[] = [
+  // Water & electrolytes
+  T('osmolality', 'Osmolality', 'Water & Sodium', 'Osmoles per kg of water, measured by freezing-point depression (mOsm/kg).', 'Reference ~275–295. Calculated = 2 Na⁺ + glucose/18 + BUN/2.8. Measure it before treating hyponatremia.', ['tonicity', 'osmolal-gap', 'pseudohyponatremia'], 'electrolytes-intro'),
+  T('tonicity', 'Tonicity (effective osmolality)', 'Water & Sodium', 'The part of osmolality due to solutes that cannot cross cell membranes and therefore move water.', '2 Na⁺ + glucose/18. Urea and ethanol raise osmolality but not tonicity.', ['osmolality', 'hhs'], 'electrolytes-intro'),
+  T('osmolal-gap', 'Osmolal gap', 'Water & Sodium', 'Measured minus calculated osmolality.', '> 10 mOsm/kg suggests unmeasured osmoles (toxic alcohols, mannitol). Falls as toxic alcohols are metabolized.', ['osmolality', 'toxic-alcohol', 'anion-gap'], 'metabolic-acidosis'),
+  T('avp', 'Arginine vasopressin', 'Water & Sodium', 'Antidiuretic hormone; inserts aquaporin-2 in the collecting duct.', 'Released by hyperosmolality and non-osmotic stimuli (hypovolemia, nausea, pain, drugs). Copeptin is its stable surrogate.', ['siadh', 'avp-deficiency', 'copeptin'], 'electrolytes-intro', 'AVP / ADH'),
+  T('siadh', 'Syndrome of inappropriate antidiuresis', 'Water & Sodium', 'Hypotonic hyponatremia from AVP action unsuppressed by low osmolality, in a euvolemic patient.', 'Uosm > 100, UNa > 30, normal thyroid and adrenal function, no diuretics. 0.9% saline can worsen it.', ['avp', 'hyponatremia', 'ods'], 'sodium-disorders', 'SIADH'),
+  T('hyponatremia', 'Hyponatremia', 'Water & Sodium', 'Serum Na⁺ < 135 mmol/L.', 'Confirm hypotonicity → urine osmolality → urine Na⁺ → volume. Treat by symptoms and chronicity.', ['siadh', 'pseudohyponatremia', 'ods'], 'sodium-disorders'),
+  T('pseudohyponatremia', 'Pseudohyponatremia', 'Water & Sodium', 'Falsely low Na⁺ on indirect ISE when lipids or proteins displace plasma water.', 'Measured osmolality and direct-ISE (blood-gas) Na⁺ are normal. No sodium treatment needed.', ['indirect-ise', 'osmolality', 'globulin-gap'], 'hemolysis-interference'),
+  T('ods', 'Osmotic demyelination syndrome', 'Water & Sodium', 'Demyelination (pons and elsewhere) after overly rapid correction of chronic hyponatremia.', 'Limit rise to ≤ 10 mmol/L/24 h (≤ 8 if high risk: Na ≤ 105, hypokalemia, alcohol use, malnutrition, liver disease).', ['hyponatremia', 'adrogue-madias'], 'sodium-disorders', 'ODS'),
+  T('adrogue-madias', 'Adrogué–Madias formula', 'Water & Sodium', 'ΔNa⁺ per litre = (infusate Na⁺ + K⁺ − serum Na⁺) ÷ (TBW + 1).', 'Estimates direction and size of change; ignores urine output, so real rises often exceed it.', ['hyponatremia', 'tbw'], 'sodium-disorders'),
+  T('tbw', 'Total body water', 'Water & Sodium', 'Fraction of body weight that is water: ~0.6 men, 0.5 women and older men, 0.45 older women.', 'Distribution volume for water and Na⁺ correction formulas.', ['adrogue-madias', 'free-water-deficit'], 'electrolytes-intro', 'TBW'),
+  T('free-water-deficit', 'Free-water deficit', 'Water & Sodium', 'TBW × (Na⁺/140 − 1).', 'Replace plus ongoing losses; chronic hypernatremia ≈ 10 mmol/L per 24 h.', ['tbw', 'avp-deficiency'], 'hypernatremia-avp'),
+  T('avp-deficiency', 'AVP deficiency / AVP resistance', 'Water & Sodium', 'New names (2022) for central and nephrogenic diabetes insipidus.', 'Hypertonic-saline–stimulated copeptin ≤ 4.9 pmol/L → AVP deficiency; basal ≥ 21.4 → AVP resistance.', ['copeptin', 'avp', 'free-water-deficit'], 'hypernatremia-avp'),
+  T('copeptin', 'Copeptin', 'Water & Sodium', 'C-terminal fragment of pro-AVP, released 1:1 with AVP and stable ex vivo.', 'Basis of modern polyuria–polydipsia testing; outperforms water deprivation.', ['avp-deficiency', 'avp'], 'hypernatremia-avp'),
+  T('pseudohyperkalemia', 'Pseudohyperkalemia', 'Potassium', 'Falsely high K⁺ from release during or after collection.', 'Hemolysis, fist clenching, thrombocytosis/leukocytosis (serum > plasma), EDTA contamination, cold storage.', ['hemolysis', 'edta-contamination'], 'potassium-disorders'),
+  T('trimethoprim', 'Trimethoprim effects', 'Potassium', 'Blocks ENaC (amiloride-like) and tubular creatinine secretion.', 'Hyperkalemia with RAAS blockers/CKD; creatinine rises without GFR change.', ['pseudohyperkalemia', 'creatinine'], 'potassium-disorders'),
+
+  // Acid–base
+  T('henderson-hasselbalch', 'Henderson–Hasselbalch equation', 'Acid–Base', 'pH = 6.1 + log(HCO₃⁻ / 0.03 × PaCO₂).', 'Use to check internal consistency of a blood gas (± 0.03).', ['winters-formula', 'anion-gap'], 'acid-base-intro'),
+  T('winters-formula', "Winter's formula", 'Acid–Base', 'Expected PaCO₂ in metabolic acidosis = 1.5 × HCO₃⁻ + 8 ± 2.', 'Higher → concurrent respiratory acidosis (fatigue); lower → respiratory alkalosis.', ['henderson-hasselbalch', 'metabolic-acidosis'], 'acid-base-intro'),
+  T('anion-gap', 'Anion gap', 'Acid–Base', 'Na⁺ − (Cl⁻ + HCO₃⁻); unmeasured anions minus unmeasured cations.', 'Analyzer-specific reference (~4–12 with ISE). Correct +2.5 per g/dL albumin below 4.', ['metabolic-acidosis', 'delta-ratio', 'goldmark', 'albumin'], 'metabolic-acidosis', 'AG'),
+  T('delta-ratio', 'Δ/Δ ratio', 'Acid–Base', '(AG − normal AG) ÷ (24 − HCO₃⁻).', '< 0.4 hyperchloremic; 0.8–2 pure high-AG; > 2 concurrent metabolic alkalosis.', ['anion-gap', 'metabolic-acidosis'], 'metabolic-acidosis'),
+  T('goldmark', 'GOLDMARK', 'Acid–Base', 'Mnemonic for high-AG acidosis: Glycols, Oxoproline, L-lactate, D-lactate, Methanol, Aspirin, Renal failure, Ketoacidosis.', 'Replaces MUDPILES (obsolete items).', ['anion-gap', 'toxic-alcohol', 'lactate'], 'metabolic-acidosis'),
+  T('metabolic-acidosis', 'Metabolic acidosis', 'Acid–Base', 'Primary fall in HCO₃⁻ lowering pH.', 'High-AG (GOLDMARK) vs normal-AG (GI loss, RTA, chloride load).', ['anion-gap', 'rta', 'winters-formula'], 'metabolic-acidosis'),
+  T('metabolic-alkalosis', 'Metabolic alkalosis', 'Acid–Base', 'Primary rise in HCO₃⁻ raising pH; needs generation and maintenance.', 'Urine Cl⁻ < 20 → saline-responsive; > 40 → check BP and aldosterone/renin.', ['urine-chloride', 'primary-aldosteronism'], 'metabolic-alkalosis'),
+  T('urine-chloride', 'Urine chloride', 'Acid–Base', 'Spot urine Cl⁻ concentration.', 'Best volume marker in metabolic alkalosis (urine Na⁺ misleads due to bicarbonaturia).', ['metabolic-alkalosis'], 'metabolic-alkalosis'),
+  T('urine-anion-gap', 'Urine anion gap', 'Acid–Base', 'UNa + UK − UCl; inverse surrogate of urinary NH₄⁺.', 'Negative in GI HCO₃⁻ loss; positive in distal and type 4 RTA. Unreliable with low UNa or unmeasured anions.', ['rta', 'metabolic-acidosis'], 'metabolic-acidosis', 'UAG'),
+  T('rta', 'Renal tubular acidosis', 'Acid–Base', 'Normal-AG acidosis from impaired renal acid excretion or HCO₃⁻ reabsorption.', 'Type 1 distal (low K⁺, urine pH > 5.5), type 2 proximal (Fanconi), type 4 (high K⁺, hypoaldosteronism).', ['urine-anion-gap', 'metabolic-acidosis'], 'metabolic-acidosis', 'RTA'),
+  T('toxic-alcohol', 'Toxic alcohols', 'Acid–Base', 'Methanol, ethylene glycol (and others) metabolized to toxic acids.', 'Early high osmolal gap, late high AG. Fomepizole on suspicion; dialysis criteria. Glycolate causes a "lactate gap".', ['osmolal-gap', 'goldmark', 'fomepizole'], 'metabolic-acidosis'),
+  T('fomepizole', 'Fomepizole', 'Acid–Base', 'Alcohol dehydrogenase inhibitor.', 'Stops formation of formate and glycolate; give before levels return.', ['toxic-alcohol'], 'metabolic-acidosis'),
+  T('lactate', 'Lactate', 'Acid–Base', 'Product of anaerobic glycolysis; cleared mainly by the liver.', '> 2 mmol/L abnormal. Type A hypoperfusion; type B drugs, liver failure, thiamine deficiency, malignancy. Rises in vitro — analyze quickly.', ['goldmark', 'anion-gap'], 'metabolic-acidosis'),
+  T('vbg', 'Venous blood gas', 'Acid–Base', 'Blood gas on peripheral venous blood.', 'pH ~0.03 lower and HCO₃⁻ ~1–2 higher than arterial; venous PCO₂ is only a screen.', ['henderson-hasselbalch'], 'acid-base-intro', 'VBG'),
+
+  // Kidney
+  T('gfr', 'Glomerular filtration rate', 'Kidney', 'Plasma volume filtered per unit time.', 'Estimate with race-free CKD-EPI 2021; add cystatin C when creatinine misleads. Invalid when creatinine is changing.', ['creatinine', 'cystatin-c', 'ckd'], 'gfr-assessment', 'GFR'),
+  T('creatinine', 'Creatinine', 'Kidney', 'Muscle-derived filtration marker, freely filtered and partly secreted (10–40%).', 'Depends on muscle mass and diet; some drugs block secretion; Jaffe interference with ketones and bilirubin.', ['gfr', 'trimethoprim', 'bun'], 'renal-intro', 'Cr'),
+  T('cystatin-c', 'Cystatin C', 'Kidney', 'Low-molecular-weight protein from all nucleated cells, freely filtered.', 'Less muscle-dependent; affected by thyroid status, steroids, inflammation. Combined eGFRcr-cys is most accurate.', ['gfr', 'creatinine'], 'renal-intro'),
+  T('bun', 'Blood urea nitrogen', 'Kidney', 'Nitrogen in urea, the main product of protein catabolism.', 'Rises with GI bleeding, protein load, catabolism, steroids and low flow; falls with liver failure and malnutrition.', ['creatinine', 'aki'], 'renal-intro', 'BUN'),
+  T('uacr', 'Urine albumin-to-creatinine ratio', 'Kidney', 'Spot measure of albuminuria (mg/g or mg/mmol).', 'A1 < 30, A2 30–300, A3 > 300 mg/g. Prognostic at every eGFR.', ['ckd', 'gfr'], 'renal-intro', 'UACR'),
+  T('ckd', 'Chronic kidney disease', 'Kidney', 'Abnormal kidney structure or function for > 3 months with health implications.', 'Classify by Cause, GFR category (G1–G5) and Albuminuria (A1–A3) — KDIGO 2024.', ['gfr', 'uacr', 'aki'], 'gfr-assessment', 'CKD'),
+  T('aki', 'Acute kidney injury', 'Kidney', 'Abrupt decline in kidney function.', 'KDIGO: Cr +0.3 mg/dL in 48 h, ×1.5 in 7 days, or UO < 0.5 mL/kg/h for 6 h.', ['fena', 'creatinine', 'ckd'], 'aki-vs-ckd', 'AKI'),
+  T('fena', 'Fractional excretion of sodium', 'Kidney', '(UNa × SCr) ÷ (SNa × UCr) × 100.', '< 1% prerenal physiology; > 2% tubular injury — many exceptions. Use FEUrea (< 35%) on diuretics.', ['aki', 'feurea'], 'aki-vs-ckd', 'FENa'),
+  T('feurea', 'Fractional excretion of urea', 'Kidney', '(Uurea × SCr) ÷ (Surea × UCr) × 100.', '< 35% suggests prerenal physiology even with loop diuretics.', ['fena', 'aki'], 'aki-vs-ckd', 'FEUrea'),
+
+  // Liver
+  T('alt', 'Alanine aminotransferase', 'Liver', 'Cytosolic hepatocyte enzyme — most liver-specific injury marker.', 'Healthy ULN ~33 IU/L (men), ~25 IU/L (women) per ACG 2017.', ['ast', 'r-ratio'], 'hepatic-intro', 'ALT'),
+  T('ast', 'Aspartate aminotransferase', 'Liver', 'Enzyme in liver, muscle, heart and red cells.', 'AST/ALT ≥ 2 suggests alcohol; AST ≫ ALT with high CK = muscle.', ['alt', 'r-ratio'], 'hepatic-intro', 'AST'),
+  T('alp', 'Alkaline phosphatase', 'Liver', 'Canalicular, bone, placental and intestinal isoenzymes.', 'Confirm hepatic origin with GGT; physiologically high in adolescence and pregnancy.', ['ggt', 'r-ratio'], 'hepatic-intro', 'ALP'),
+  T('ggt', 'Gamma-glutamyl transferase', 'Liver', 'Biliary epithelial enzyme.', 'Confirms liver origin of ALP; induced by alcohol and enzyme-inducing drugs.', ['alp'], 'hepatic-intro', 'GGT'),
+  T('r-ratio', 'R ratio', 'Liver', '(ALT/ULN) ÷ (ALP/ULN).', '≥ 5 hepatocellular, ≤ 2 cholestatic, 2–5 mixed. Used to type DILI.', ['alt', 'alp', 'hys-law'], 'hepatic-intro'),
+  T('hys-law', "Hy's law", 'Liver', 'Drug-induced hepatocellular injury (ALT > 3 × ULN) with jaundice (bilirubin > 2 × ULN), ALP < 2 × ULN.', '~10% risk of death or transplant — stop the drug.', ['r-ratio', 'alt'], 'cholestatic-vs-hepatocellular'),
+  T('bilirubin', 'Bilirubin', 'Liver', 'Heme breakdown product; unconjugated (indirect) and conjugated (direct) fractions.', 'Direct < 20% → unconjugated (Gilbert, hemolysis); direct > 20% or > 1 mg/dL → hepatobiliary.', ['gilbert', 'hemolysis'], 'hepatic-intro'),
+  T('gilbert', 'Gilbert syndrome', 'Liver', 'Reduced UGT1A1 activity causing mild unconjugated hyperbilirubinemia.', 'Rises with fasting/illness; normal enzymes and hemolysis markers; benign.', ['bilirubin'], 'hepatic-intro'),
+  T('masld', 'MASLD', 'Liver', 'Metabolic dysfunction-associated steatotic liver disease (formerly NAFLD); MASH replaces NASH.', 'Risk-stratify fibrosis with FIB-4, then elastography.', ['fib4', 'alt'], 'hepatic-intro'),
+  T('fib4', 'FIB-4 index', 'Liver', '(Age × AST) ÷ (platelets × √ALT).', '< 1.3 low risk of advanced fibrosis; > 2.67 high (age ≥ 65: lower cut-off 2.0).', ['masld'], 'synthetic-function', 'FIB-4'),
+  T('inr', 'International normalized ratio', 'Liver', 'Standardized PT ratio (factors I, II, V, VII, X).', 'Fastest synthetic-function marker; does not predict bleeding risk in cirrhosis.', ['alf', 'meld'], 'synthetic-function', 'INR'),
+  T('alf', 'Acute liver failure', 'Liver', 'INR ≥ 1.5 + encephalopathy, no prior cirrhosis, illness < 26 weeks.', 'Transfer early; King\'s College criteria predict poor prognosis.', ['inr', 'meld'], 'synthetic-function', 'ALF'),
+  T('meld', 'MELD 3.0', 'Liver', 'Model for End-Stage Liver Disease incorporating bilirubin, INR, creatinine, Na⁺, albumin and sex.', 'OPTN allocation score since 2023.', ['inr', 'alf'], 'synthetic-function'),
+
+  // Endocrine
+  T('tsh', 'Thyroid-stimulating hormone', 'Endocrine', 'Pituitary hormone driving T4/T3 secretion; log-linear inverse relationship with FT4.', 'Best screening test with an intact pituitary in steady state; misleading in central disease, NTI and biotin use.', ['ft4', 'biotin'], 'thyroid-testing', 'TSH'),
+  T('ft4', 'Free thyroxine', 'Endocrine', 'Unbound T4 measured by immunoassay.', 'Use with TSH; target FT4 for dosing in central hypothyroidism. Competitive assays read high with biotin.', ['tsh', 'biotin'], 'thyroid-testing', 'FT4'),
+  T('nti', 'Non-thyroidal illness', 'Endocrine', 'Thyroid-test changes during acute or critical illness without thyroid disease.', 'Low T3, then low T4; TSH low or transiently high in recovery. Avoid testing unless suspected.', ['tsh', 'ft4'], 'thyroid-testing', 'NTI'),
+  T('acth-stim', 'Cosyntropin (ACTH) stimulation test', 'Endocrine', '250 µg ACTH; cortisol at 30/60 min.', 'Peak cut-off is assay-specific: ~18 µg/dL with older immunoassays, ~14–15 µg/dL with LC-MS/MS or newer immunoassays.', ['adrenal-insufficiency', 'cortisol'], 'adrenal-testing'),
+  T('cortisol', 'Cortisol', 'Endocrine', 'Main glucocorticoid; diurnal, ~90% protein-bound.', 'Estrogen raises total cortisol (CBG); prednisolone cross-reacts in immunoassays.', ['acth-stim', 'adrenal-insufficiency'], 'adrenal-testing'),
+  T('adrenal-insufficiency', 'Adrenal insufficiency', 'Endocrine', 'Inadequate cortisol production — primary, secondary/tertiary or glucocorticoid-induced.', 'Crisis: hydrocortisone 100 mg IV without waiting for tests.', ['cortisol', 'acth-stim'], 'adrenal-testing', 'AI'),
+  T('primary-aldosteronism', 'Primary aldosteronism', 'Endocrine', 'Autonomous aldosterone secretion with suppressed renin.', 'Endocrine Society 2025 suggests screening all hypertension (ARR); most patients are normokalemic.', ['metabolic-alkalosis'], 'adrenal-testing', 'PA'),
+  T('hba1c', 'Hemoglobin A1c', 'Endocrine', 'Glycated hemoglobin reflecting ~2–3 months of glycemia.', '≥ 6.5% diagnoses diabetes; unreliable with altered red-cell lifespan, ESA, CKD, pregnancy, some variants.', ['dka', 'hhs'], 'diabetes-markers', 'HbA1c'),
+  T('dka', 'Diabetic ketoacidosis', 'Endocrine', 'Insulin deficiency with ketoacidosis.', '2024: glucose ≥ 200 or known DM, β-OHB ≥ 3.0 mmol/L, pH < 7.3 and/or HCO₃⁻ < 18.', ['hhs', 'anion-gap', 'hba1c'], 'diabetes-markers', 'DKA'),
+  T('hhs', 'Hyperosmolar hyperglycemic state', 'Endocrine', 'Severe hyperglycemia and hyperosmolality without significant ketoacidosis.', 'Glucose ≥ 600, effective osmolality > 300, β-OHB < 3.0, pH ≥ 7.3. Fluids first.', ['dka', 'tonicity'], 'diabetes-markers', 'HHS'),
+  T('c-peptide', 'C-peptide', 'Endocrine', 'Cleaved from proinsulin 1:1 with endogenous insulin.', 'High insulin + suppressed C-peptide = exogenous insulin.', ['hba1c'], 'diabetes-markers'),
+
+  // Minerals
+  T('ionized-calcium', 'Ionized calcium', 'Minerals', 'Free, biologically active calcium (~45% of total).', 'Preferred over albumin-corrected calcium in CKD, critical illness and abnormal albumin.', ['albumin', 'pth'], 'calcium-disorders', 'iCa'),
+  T('pth', 'Parathyroid hormone', 'Minerals', 'Raises calcium via bone, kidney and vitamin D activation.', 'First test in hypercalcemia: high/normal → PTH-dependent; suppressed → PTHrP, vitamin D, myeloma.', ['ionized-calcium', 'cccr', 'pthrp'], 'calcium-disorders', 'PTH'),
+  T('pthrp', 'PTH-related peptide', 'Minerals', 'Tumor-secreted peptide that activates the PTH receptor.', 'Humoral hypercalcemia of malignancy (squamous, renal, breast cancers).', ['pth'], 'calcium-disorders', 'PTHrP'),
+  T('cccr', 'Calcium/creatinine clearance ratio', 'Minerals', '(UCa × SCr) ÷ (SCa × UCr).', '< 0.01 suggests familial hypocalciuric hypercalcemia.', ['pth'], 'calcium-disorders', 'CCCR'),
+  T('refeeding', 'Refeeding syndrome', 'Minerals', 'Electrolyte shifts (PO₄, K⁺, Mg) and thiamine depletion after reintroducing nutrition.', 'ASPEN 2020: > 30% fall or organ dysfunction = severe. Start low, give thiamine.', ['magnesium'], 'mg-phos'),
+  T('magnesium', 'Magnesium', 'Minerals', 'Mostly intracellular divalent cation.', 'Depletion causes refractory hypokalemia and hypocalcemia; PPIs and diuretics are common causes.', ['refeeding', 'pth'], 'mg-phos', 'Mg'),
+  T('tls', 'Tumor lysis syndrome', 'Minerals', 'Release of intracellular contents after tumor cell death.', 'Cairo–Bishop: ≥ 2 of uric acid, K⁺, PO₄ up or Ca down. Rasburicase samples on ice.', ['refeeding'], 'mg-phos', 'TLS'),
+  T('albumin', 'Albumin', 'Minerals', 'Major plasma protein (half-life ~3 weeks).', 'Low albumin lowers total calcium and the anion gap.', ['ionized-calcium', 'anion-gap', 'globulin-gap'], 'calcium-disorders'),
+
+  // Cardiac & metabolic
+  T('hs-troponin', 'High-sensitivity troponin', 'Biomarkers', 'Cardiac troponin assay measurable in most healthy people, reported in ng/L.', 'Injury > 99th URL; MI = dynamic change + ischemia. Use assay-specific 0 h/1 h cut-offs.', ['natriuretic-peptide', 'macrotroponin'], 'troponin-np', 'hs-cTn'),
+  T('macrotroponin', 'Macrotroponin', 'Biomarkers', 'cTnI bound to immunoglobulin, cleared slowly.', 'Persistent stable elevation without disease; PEG precipitation or alternative assay.', ['hs-troponin'], 'troponin-np'),
+  T('natriuretic-peptide', 'BNP / NT-proBNP', 'Biomarkers', 'Peptides released with ventricular wall stress.', 'Rule-out acute HF: BNP < 100, NT-proBNP < 300 pg/mL. Use NT-proBNP on sacubitril/valsartan.', ['hs-troponin'], 'troponin-np'),
+  T('lpa', 'Lipoprotein(a)', 'Biomarkers', 'LDL-like particle with apo(a); genetically determined.', 'Measure once in adulthood; > 50 mg/dL (~105 nmol/L) raises risk (ESC/EAS 2025).', ['ldl-c'], 'lipids', 'Lp(a)'),
+  T('ldl-c', 'LDL cholesterol', 'Biomarkers', 'Cholesterol carried in LDL; usually calculated.', 'Friedewald fails with TG > 400 or very low LDL-C; Martin–Hopkins or Sampson are better; apoB when TG high.', ['lpa'], 'lipids', 'LDL-C'),
+  T('lipase', 'Lipase', 'Biomarkers', 'Pancreatic enzyme.', '> 3 × ULN supports pancreatitis; level does not track severity.', ['ck'], 'tissue-injury-markers'),
+  T('ck', 'Creatine kinase', 'Biomarkers', 'Muscle enzyme.', 'Rhabdomyolysis: > 5 × ULN with heme-positive, RBC-poor urine.', ['lipase'], 'tissue-injury-markers', 'CK'),
+
+  // Lab quality
+  T('hemolysis', 'Hemolysis', 'Lab Quality', 'Red-cell rupture releasing contents into serum/plasma.', 'In vitro (artifact): K⁺, LD, AST, phosphate ↑, haptoglobin normal. In vivo: haptoglobin low.', ['pseudohyperkalemia', 'hil'], 'hemolysis-interference'),
+  T('hil', 'HIL indices', 'Lab Quality', 'Spectrophotometric hemolysis, icterus and lipemia indices measured on each sample.', 'Drive result suppression or comments according to analyte-specific limits.', ['hemolysis'], 'hemolysis-interference'),
+  T('edta-contamination', 'K₂EDTA contamination', 'Lab Quality', 'Carry-over of EDTA anticoagulant into a serum/heparin sample.', 'K⁺ ↑↑, Ca²⁺ ↓↓, Mg ↓, ALP ↓ — recollect.', ['pseudohyperkalemia', 'order-of-draw'], 'error-types'),
+  T('order-of-draw', 'Order of draw', 'Lab Quality', 'CLSI GP41 tube sequence: cultures, citrate, serum, heparin, EDTA, fluoride.', 'Prevents additive carry-over; matters most with syringe transfers.', ['edta-contamination'], 'error-types'),
+  T('indirect-ise', 'Indirect vs direct ISE', 'Lab Quality', 'Indirect ISE dilutes the sample first (assumes 93% plasma water); direct ISE measures undiluted.', 'Indirect ISE causes pseudohyponatremia with extreme lipids/proteins.', ['pseudohyponatremia'], 'hemolysis-interference', 'ISE'),
+  T('biotin', 'Biotin interference', 'Lab Quality', 'High-dose biotin saturates streptavidin in immunoassays.', 'Sandwich assays falsely low (TSH, troponin); competitive falsely high (FT4).', ['tsh', 'hs-troponin', 'heterophile'], 'hemolysis-interference'),
+  T('heterophile', 'Heterophile antibodies', 'Lab Quality', 'Human antibodies that bridge assay antibodies.', 'Usually falsely high sandwich immunoassays; detect with blocking tubes, dilution, alternate platform.', ['biotin', 'hook-effect'], 'hemolysis-interference'),
+  T('hook-effect', 'High-dose hook effect', 'Lab Quality', 'Falsely low result in one-step sandwich assays at extreme analyte excess.', 'Dilute and repeat (prolactin in macroadenoma, hCG, tumor markers).', ['heterophile'], 'hemolysis-interference'),
+  T('westgard', 'Westgard rules', 'Lab Quality', 'Multirule QC criteria applied to control results.', '1-3s, R-4s → random error; 2-2s, 4-1s, 10x → systematic error.', ['sigma', 'rcv'], 'qc-basics'),
+  T('sigma', 'Sigma metric', 'Lab Quality', '(TEa − |bias|) ÷ CV.', '≥ 6σ needs minimal QC; < 3σ cannot be controlled reliably.', ['westgard'], 'qc-basics'),
+  T('rcv', 'Reference change value', 'Lab Quality', 'Minimum significant difference between serial results: √2 · Z · √(CVa² + CVi²).', 'Creatinine ≈ 15%, potassium ≈ 14% (95%).', ['westgard', 'reference-interval'], 'qc-basics', 'RCV'),
+  T('reference-interval', 'Reference interval', 'Lab Quality', 'Central 95% of results in healthy reference individuals.', 'Not a diagnostic threshold; 5% of healthy people fall outside on each test.', ['rcv'], 'qc-basics'),
+  T('globulin-gap', 'Globulin gap', 'Lab Quality', 'Total protein − albumin.', '> 4 g/dL suggests paraprotein or chronic inflammation; < 2 g/dL hypogammaglobulinemia.', ['pseudohyponatremia', 'albumin'], 'metabolic-intro'),
+];

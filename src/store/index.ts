@@ -1,136 +1,146 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type {
-  UserProgress,
-  AppSettings,
-  AssessmentScore,
-} from '../types';
+import type { AppSettings, ModuleId, Progress, QuestionStat, QuizSession } from '../types';
+
+/** Leitner intervals in days for boxes 0–5. Box 0 = due immediately (answered wrong). */
+export const BOX_INTERVAL_DAYS = [0, 1, 3, 7, 16, 35];
+
+export const today = () => new Date().toISOString().slice(0, 10);
+
+const emptyProgress = (): Progress => ({
+  lessons: {},
+  cases: {},
+  labs: {},
+  questions: {},
+  sessions: [],
+  activeDays: [],
+});
+
+const defaultSettings: AppSettings = {
+  theme: 'dark',
+  textSize: 'md',
+  reduceMotion: false,
+  units: 'conventional',
+};
 
 interface AppState {
-  // Settings
   settings: AppSettings;
-  updateSettings: (settings: Partial<AppSettings>) => void;
+  progress: Progress;
+  updateSettings: (s: Partial<AppSettings>) => void;
+  completeLesson: (id: string) => void;
+  uncompleteLesson: (id: string) => void;
+  recordAnswer: (questionId: string, correct: boolean) => void;
+  completeCase: (id: string, score: number, total: number) => void;
+  visitLab: (id: string) => void;
+  recordSession: (s: Omit<QuizSession, 'id' | 'at'> & { moduleId?: ModuleId }) => void;
+  setLastLocation: (path: string, title: string) => void;
+  resetProgress: () => void;
+  importProgress: (p: Progress) => void;
+}
 
-  // User Progress
-  progress: UserProgress;
-  completeLesson: (lessonId: string) => void;
-  completeInteractive: (interactiveId: string) => void;
-  completeCase: (caseId: string) => void;
-  recordAssessmentScore: (assessmentId: string, score: number, totalPoints: number) => void;
-  updateTimeSpent: (minutes: number) => void;
+function touch(p: Progress): Progress {
+  const d = today();
+  if (p.activeDays[p.activeDays.length - 1] === d) return p;
+  return { ...p, activeDays: [...p.activeDays, d].slice(-400) };
+}
 
-  // Navigation state
-  currentModuleId: string | null;
-  currentLessonId: string | null;
-  setCurrentModule: (moduleId: string | null) => void;
-  setCurrentLesson: (lessonId: string | null) => void;
+function nextStat(prev: QuestionStat | undefined, correct: boolean): QuestionStat {
+  const now = new Date();
+  const box = correct ? Math.min(5, (prev?.box ?? 0) + 1) : 0;
+  const due = new Date(now.getTime() + BOX_INTERVAL_DAYS[box] * 86400000);
+  return {
+    box,
+    due: due.toISOString(),
+    attempts: (prev?.attempts ?? 0) + 1,
+    correct: (prev?.correct ?? 0) + (correct ? 1 : 0),
+    lastResult: correct,
+    lastAt: now.toISOString(),
+  };
 }
 
 const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      // Initial settings
-      settings: {
-        theme: 'dark',
-        fontSize: 'medium',
-        highContrast: false,
-        reduceMotion: false,
-        offlineMode: false,
-        notificationsEnabled: true,
-      },
+      settings: defaultSettings,
+      progress: emptyProgress(),
 
-      updateSettings: (newSettings) =>
-        set((state) => ({
-          settings: { ...state.settings, ...newSettings },
-        })),
+      updateSettings: (s) => set((st) => ({ settings: { ...st.settings, ...s } })),
 
-      // Initial progress
-      progress: {
-        lessonsCompleted: [],
-        interactivesCompleted: [],
-        casesCompleted: [],
-        assessmentScores: {},
-        totalTimeSpent: 0,
-        currentStreak: 0,
-        lastAccessDate: new Date().toISOString(),
-        achievements: [],
-      },
+      completeLesson: (id) =>
+        set((st) =>
+          st.progress.lessons[id]
+            ? st
+            : { progress: touch({ ...st.progress, lessons: { ...st.progress.lessons, [id]: new Date().toISOString() } }) }
+        ),
 
-      completeLesson: (lessonId) =>
-        set((state) => ({
-          progress: {
-            ...state.progress,
-            lessonsCompleted: state.progress.lessonsCompleted.includes(lessonId)
-              ? state.progress.lessonsCompleted
-              : [...state.progress.lessonsCompleted, lessonId],
-          },
-        })),
-
-      completeInteractive: (interactiveId) =>
-        set((state) => ({
-          progress: {
-            ...state.progress,
-            interactivesCompleted: state.progress.interactivesCompleted.includes(interactiveId)
-              ? state.progress.interactivesCompleted
-              : [...state.progress.interactivesCompleted, interactiveId],
-          },
-        })),
-
-      completeCase: (caseId) =>
-        set((state) => ({
-          progress: {
-            ...state.progress,
-            casesCompleted: state.progress.casesCompleted.includes(caseId)
-              ? state.progress.casesCompleted
-              : [...state.progress.casesCompleted, caseId],
-          },
-        })),
-
-      recordAssessmentScore: (assessmentId, score, totalPoints) =>
-        set((state) => {
-          const existingScore = state.progress.assessmentScores[assessmentId];
-          const newScore: AssessmentScore = {
-            assessmentId,
-            score,
-            totalPoints,
-            completedAt: new Date().toISOString(),
-            attempts: existingScore ? existingScore.attempts + 1 : 1,
-          };
-
-          return {
-            progress: {
-              ...state.progress,
-              assessmentScores: {
-                ...state.progress.assessmentScores,
-                [assessmentId]: newScore,
-              },
-            },
-          };
+      uncompleteLesson: (id) =>
+        set((st) => {
+          const lessons = { ...st.progress.lessons };
+          delete lessons[id];
+          return { progress: { ...st.progress, lessons } };
         }),
 
-      updateTimeSpent: (minutes) =>
-        set((state) => ({
-          progress: {
-            ...state.progress,
-            totalTimeSpent: state.progress.totalTimeSpent + minutes,
-          },
+      recordAnswer: (questionId, correct) =>
+        set((st) => ({
+          progress: touch({
+            ...st.progress,
+            questions: { ...st.progress.questions, [questionId]: nextStat(st.progress.questions[questionId], correct) },
+          }),
         })),
 
-      // Navigation
-      currentModuleId: null,
-      currentLessonId: null,
+      completeCase: (id, score, total) =>
+        set((st) => ({
+          progress: touch({
+            ...st.progress,
+            cases: { ...st.progress.cases, [id]: { score, total, completedAt: new Date().toISOString() } },
+          }),
+        })),
 
-      setCurrentModule: (moduleId) => set({ currentModuleId: moduleId }),
-      setCurrentLesson: (lessonId) => set({ currentLessonId: lessonId }),
+      visitLab: (id) =>
+        set((st) =>
+          st.progress.labs[id] ? st : { progress: touch({ ...st.progress, labs: { ...st.progress.labs, [id]: new Date().toISOString() } }) }
+        ),
+
+      recordSession: (s) =>
+        set((st) => ({
+          progress: touch({
+            ...st.progress,
+            sessions: [...st.progress.sessions, { ...s, id: crypto.randomUUID?.() ?? String(Date.now()), at: new Date().toISOString() }].slice(-100),
+          }),
+        })),
+
+      setLastLocation: (path, title) =>
+        set((st) => ({ progress: { ...st.progress, lastLocation: { path, title, at: new Date().toISOString() } } })),
+
+      resetProgress: () => set({ progress: emptyProgress() }),
+
+      importProgress: (p) => set({ progress: { ...emptyProgress(), ...p } }),
     }),
     {
       name: 'labverse-storage',
-      partialize: (state) => ({
-        settings: state.settings,
-        progress: state.progress,
-      }),
+      version: 2,
+      partialize: (st) => ({ settings: st.settings, progress: st.progress }),
+      migrate: (persisted, version) => {
+        const old = (persisted ?? {}) as Record<string, unknown>;
+        if (version < 2) {
+          const oldProgress = (old.progress ?? {}) as { lessonsCompleted?: string[]; casesCompleted?: string[] };
+          const oldSettings = (old.settings ?? {}) as { theme?: AppSettings['theme']; reduceMotion?: boolean };
+          const stamp = new Date().toISOString();
+          const progress = emptyProgress();
+          (oldProgress.lessonsCompleted ?? []).forEach((id) => (progress.lessons[id] = stamp));
+          return {
+            settings: { ...defaultSettings, theme: oldSettings.theme ?? 'dark', reduceMotion: !!oldSettings.reduceMotion },
+            progress,
+          };
+        }
+        return persisted as { settings: AppSettings; progress: Progress };
+      },
     }
   )
 );
 
 export default useAppStore;
+
+export function isDue(stat: QuestionStat | undefined, now = Date.now()) {
+  return !!stat && new Date(stat.due).getTime() <= now;
+}

@@ -1,179 +1,162 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
+import { useRef, useState } from 'react';
+import { Download, RotateCcw, Upload } from 'lucide-react';
 import useAppStore from '../store';
-import { useTheme } from '../components/ThemeProvider';
+import type { AppSettings, Progress } from '../types';
+import { PageHeader } from '../components/PageHeader';
+import { Button } from '../components/ui/Button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
+import { cn } from '../lib/utils';
+
+function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; label: string }) {
+  return (
+    <div className="inline-flex rounded-md border p-0.5" role="group" aria-label={label}>
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          aria-pressed={value === o.value}
+          onClick={() => onChange(o.value)}
+          className={cn('rounded px-3 py-1.5 text-sm font-medium', value === o.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Row({ title, text, children }: { title: string; text: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b py-4 last:border-b-0">
+      <div>
+        <p className="text-sm font-medium">{title}</p>
+        <p className="text-sm text-muted-foreground">{text}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export function Settings() {
-  const { settings, updateSettings } = useAppStore();
-  const { theme, setTheme } = useTheme();
+  const { settings, updateSettings, progress, resetProgress, importProgress } = useAppStore();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [msg, setMsg] = useState('');
 
-  const themes = [
-    { value: 'light', label: 'Light' },
-    { value: 'dark', label: 'Dark' },
-    { value: 'system', label: 'System' },
-  ] as const;
+  const exportData = () => {
+    const blob = new Blob([JSON.stringify({ app: 'labverse', version: 2, exportedAt: new Date().toISOString(), progress }, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `labverse-progress-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
 
-  const fontSizes = [
-    { value: 'small', label: 'Small' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'large', label: 'Large' },
-  ] as const;
+  const onImport = async (f: File) => {
+    try {
+      const data = JSON.parse(await f.text()) as { app?: string; progress?: Progress };
+      if (data.app !== 'labverse' || !data.progress) throw new Error('Not a LabVerse export');
+      importProgress(data.progress);
+      setMsg('Progress imported.');
+    } catch (e) {
+      setMsg(`Import failed: ${(e as Error).message}`);
+    }
+  };
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Settings</h1>
-        <p className="text-lg text-muted-foreground">
-          Customize your learning experience
-        </p>
-      </div>
-
-      {/* Theme Settings */}
-      <Card>
+    <div className="max-w-3xl">
+      <PageHeader title="Settings" subtitle="Everything is stored locally in this browser. No account, no tracking." />
+      <Card className="mb-5">
         <CardHeader>
-          <CardTitle>Appearance</CardTitle>
-          <CardDescription>Customize how LabVerse looks</CardDescription>
+          <CardTitle className="text-base">Display</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="text-sm font-medium mb-3">Theme</h4>
-            <div className="flex gap-2">
-              {themes.map((t) => (
-                <Button
-                  key={t.value}
-                  variant={theme === t.value ? 'default' : 'outline'}
-                  onClick={() => setTheme(t.value)}
-                >
-                  {t.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h4 className="text-sm font-medium mb-3">Font Size</h4>
-            <div className="flex gap-2">
-              {fontSizes.map((size) => (
-                <Button
-                  key={size.value}
-                  variant={settings.fontSize === size.value ? 'default' : 'outline'}
-                  onClick={() => updateSettings({ fontSize: size.value })}
-                >
-                  {size.label}
-                </Button>
-              ))}
-            </div>
-          </div>
+        <CardContent>
+          <Row title="Theme" text="Follow your system or choose one.">
+            <Segmented<AppSettings['theme']>
+              label="Theme"
+              value={settings.theme}
+              onChange={(v) => updateSettings({ theme: v })}
+              options={[
+                { value: 'light', label: 'Light' },
+                { value: 'dark', label: 'Dark' },
+                { value: 'system', label: 'System' },
+              ]}
+            />
+          </Row>
+          <Row title="Text size" text="Scales all text and spacing.">
+            <Segmented<AppSettings['textSize']>
+              label="Text size"
+              value={settings.textSize}
+              onChange={(v) => updateSettings({ textSize: v })}
+              options={[
+                { value: 'sm', label: 'Small' },
+                { value: 'md', label: 'Medium' },
+                { value: 'lg', label: 'Large' },
+              ]}
+            />
+          </Row>
+          <Row title="Reduce motion" text="Turns off animations and transitions.">
+            <Segmented<'on' | 'off'>
+              label="Reduce motion"
+              value={settings.reduceMotion ? 'on' : 'off'}
+              onChange={(v) => updateSettings({ reduceMotion: v === 'on' })}
+              options={[
+                { value: 'off', label: 'Off' },
+                { value: 'on', label: 'On' },
+              ]}
+            />
+          </Row>
+          <Row title="Units in cases" text="Show case results in conventional (US) or SI units.">
+            <Segmented<AppSettings['units']>
+              label="Units"
+              value={settings.units}
+              onChange={(v) => updateSettings({ units: v })}
+              options={[
+                { value: 'conventional', label: 'Conventional' },
+                { value: 'si', label: 'SI' },
+              ]}
+            />
+          </Row>
         </CardContent>
       </Card>
 
-      {/* Accessibility Settings */}
-      <Card>
+      <Card className="mb-5">
         <CardHeader>
-          <CardTitle>Accessibility</CardTitle>
-          <CardDescription>Options to improve accessibility</CardDescription>
+          <CardTitle className="text-base">Your data</CardTitle>
+          <CardDescription>Move progress between devices with a file, or start over.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-medium">High Contrast</h4>
-              <p className="text-sm text-muted-foreground">
-                Increase contrast for better visibility
-              </p>
-            </div>
-            <Button
-              variant={settings.highContrast ? 'default' : 'outline'}
-              onClick={() =>
-                updateSettings({ highContrast: !settings.highContrast })
+        <CardContent className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={exportData}>
+            <Download className="h-4 w-4" /> Export progress
+          </Button>
+          <Button variant="outline" onClick={() => fileRef.current?.click()}>
+            <Upload className="h-4 w-4" /> Import progress
+          </Button>
+          <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => e.target.files?.[0] && onImport(e.target.files[0])} />
+          <Button
+            variant="destructive"
+            onClick={() => {
+              if (window.confirm('Erase all progress on this device? This cannot be undone.')) {
+                resetProgress();
+                setMsg('Progress reset.');
               }
-            >
-              {settings.highContrast ? 'On' : 'Off'}
-            </Button>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-medium">Reduce Motion</h4>
-              <p className="text-sm text-muted-foreground">
-                Minimize animations and transitions
-              </p>
-            </div>
-            <Button
-              variant={settings.reduceMotion ? 'default' : 'outline'}
-              onClick={() =>
-                updateSettings({ reduceMotion: !settings.reduceMotion })
-              }
-            >
-              {settings.reduceMotion ? 'On' : 'Off'}
-            </Button>
-          </div>
+            }}
+          >
+            <RotateCcw className="h-4 w-4" /> Reset progress
+          </Button>
+          {msg && <p className="w-full text-sm text-muted-foreground" role="status">{msg}</p>}
         </CardContent>
       </Card>
 
-      {/* App Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Application</CardTitle>
-          <CardDescription>General app settings</CardDescription>
+          <CardTitle className="text-base">About</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-medium">Offline Mode</h4>
-              <p className="text-sm text-muted-foreground">
-                Enable offline access to content
-              </p>
-            </div>
-            <Button
-              variant={settings.offlineMode ? 'default' : 'outline'}
-              onClick={() =>
-                updateSettings({ offlineMode: !settings.offlineMode })
-              }
-            >
-              {settings.offlineMode ? 'On' : 'Off'}
-            </Button>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-medium">Notifications</h4>
-              <p className="text-sm text-muted-foreground">
-                Receive learning reminders and updates
-              </p>
-            </div>
-            <Button
-              variant={settings.notificationsEnabled ? 'default' : 'outline'}
-              onClick={() =>
-                updateSettings({
-                  notificationsEnabled: !settings.notificationsEnabled,
-                })
-              }
-            >
-              {settings.notificationsEnabled ? 'On' : 'Off'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* About */}
-      <Card>
-        <CardHeader>
-          <CardTitle>About LabVerse</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Version</span>
-            <Badge variant="outline">1.0.0</Badge>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Build</span>
-            <Badge variant="outline">Production</Badge>
-          </div>
-          <p className="text-xs text-muted-foreground mt-4">
-            LabVerse is an interactive clinical chemistry education platform designed
-            for medical students, residents, fellows, and clinical pathologists.
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>
+            LabVerse teaches clinical chemistry as one connected system for students, residents, fellows and laboratory professionals. Content was
+            reviewed against current guidelines in November 2026; see the Evidence Library for sources.
           </p>
+          <p>Works offline after the first visit. Install it from your browser menu to use it like an app.</p>
         </CardContent>
       </Card>
     </div>

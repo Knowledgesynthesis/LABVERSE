@@ -1,199 +1,140 @@
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, BookOpen } from 'lucide-react';
-import { Card } from '../components/ui/Card';
+import { useEffect } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, CheckCircle2, Clock, ListChecks, RotateCcw, Target } from 'lucide-react';
+import { lessonById, moduleById, orderedLessons } from '../content';
+import useAppStore from '../store';
+import { HUE } from '../lib/moduleStyle';
+import { BlockView } from '../components/lesson/Blocks';
+import { RefList } from '../components/RefList';
+import { NotFound, PageHeader } from '../components/PageHeader';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { lessons, modules } from '../data';
-import useAppStore from '../store';
-import type { LessonContent, TableContent } from '../types';
+import { cn, slug } from '../lib/utils';
 
 export function Lesson() {
   const { lessonId } = useParams();
-  const { progress, completeLesson } = useAppStore();
+  const lesson = lessonId ? lessonById[lessonId] : undefined;
+  const { progress, completeLesson, uncompleteLesson, setLastLocation } = useAppStore();
 
-  const lesson = lessons.find((l) => l.id === lessonId);
-  const module = lesson ? modules.find((m) => m.id === lesson.moduleId) : null;
+  useEffect(() => {
+    if (lesson) setLastLocation(`/lessons/${lesson.id}`, lesson.title);
+  }, [lesson, setLastLocation]);
 
-  if (!lesson || !module) {
-    return (
-      <div className="text-center py-12">
-        <h2 className="text-2xl font-bold">Lesson not found</h2>
-        <Link to="/" className="mt-4 inline-block">
-          <Button variant="outline">Back to Home</Button>
-        </Link>
-      </div>
-    );
-  }
+  if (!lesson) return <NotFound what="Lesson" back="/learn" />;
+  const m = moduleById[lesson.moduleId];
+  const hue = HUE[m.hue];
+  const done = !!progress.lessons[lesson.id];
+  const idx = orderedLessons.findIndex((l) => l.id === lesson.id);
+  const prev = orderedLessons[idx - 1];
+  const next = orderedLessons[idx + 1];
+  const headings = lesson.blocks.filter((b) => b.type === 'h') as { type: 'h'; text: string }[];
+  const checks = lesson.blocks.filter((b) => b.type === 'check').length;
 
-  const isCompleted = progress.lessonsCompleted.includes(lesson.id);
+  return (
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_14rem] lg:gap-10">
+      <article className="min-w-0">
+        <PageHeader
+          back={{ to: `/modules/${m.id}`, label: m.title }}
+          title={lesson.title}
+          subtitle={lesson.summary}
+          eyebrow={
+            <>
+              <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', hue.soft, hue.text)}>{m.short}</span>
+              <Badge variant="secondary">
+                <Clock className="h-3 w-3" /> {lesson.minutes} min
+              </Badge>
+              <Badge variant="secondary" className="capitalize">
+                {lesson.bloom}
+              </Badge>
+              <Badge variant="secondary">
+                <ListChecks className="h-3 w-3" /> {checks} checks
+              </Badge>
+              {done && (
+                <Badge variant="success">
+                  <CheckCircle2 className="h-3 w-3" /> Completed
+                </Badge>
+              )}
+            </>
+          }
+        />
 
-  const handleComplete = () => {
-    if (!isCompleted) {
-      completeLesson(lesson.id);
-    }
-  };
-
-  const renderContent = (content: LessonContent, index: number) => {
-    switch (content.type) {
-      case 'heading':
-        if (content.level === 1) {
-          return (
-            <h1 key={index} className="text-3xl font-bold mt-8 mb-4 text-foreground">
-              {content.content as string}
-            </h1>
-          );
-        }
-        return (
-          <h2 key={index} className="text-2xl font-semibold mt-6 mb-3 text-foreground">
-            {content.content as string}
-          </h2>
-        );
-
-      case 'text':
-        return (
-          <p key={index} className="text-base leading-relaxed mb-4 text-foreground">
-            {content.content as string}
+        <section className="mb-8 rounded-lg border bg-card p-5">
+          <p className="mb-2 flex items-center gap-2 text-sm font-semibold">
+            <Target className="h-4 w-4 text-primary" /> You will be able to
           </p>
-        );
-
-      case 'list':
-        return (
-          <ul key={index} className="list-disc list-inside space-y-2 mb-4 ml-4">
-            {(content.content as string[]).map((item, i) => (
-              <li key={i} className="text-base text-foreground">
-                {item}
+          <ul className="grid gap-1.5 text-sm sm:grid-cols-2">
+            {lesson.objectives.map((o) => (
+              <li key={o} className="flex gap-2">
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                {o}
               </li>
             ))}
           </ul>
-        );
+        </section>
 
-      case 'table':
-        const tableContent = content.content as TableContent;
-        return (
-          <div key={index} className="overflow-x-auto mb-6">
-            <table className="w-full border-collapse border border-border">
-              <thead>
-                <tr className="bg-muted">
-                  {tableContent.headers.map((header, i) => (
-                    <th
-                      key={i}
-                      className="border border-border px-4 py-2 text-left font-semibold text-foreground"
-                    >
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {tableContent.rows.map((row, i) => (
-                  <tr key={i} className="hover:bg-muted/50">
-                    {row.map((cell, j) => (
-                      <td key={j} className="border border-border px-4 py-2 text-foreground">
-                        {cell}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-
-      case 'formula':
-        return (
-          <div key={index} className="bg-muted text-foreground p-4 rounded-lg mb-4 font-mono text-center">
-            {content.content as string}
-          </div>
-        );
-
-      case 'callout':
-        const calloutColors = {
-          info: 'bg-blue-500/10 border-blue-500/50 text-slate-900 dark:text-blue-100',
-          warning: 'bg-yellow-500/10 border-yellow-500/50 text-slate-900 dark:text-yellow-100',
-          success: 'bg-green-500/10 border-green-500/50 text-slate-900 dark:text-green-100',
-          error: 'bg-red-500/10 border-red-500/50 text-slate-900 dark:text-red-100',
-          'clinical-pearl':
-            'bg-purple-500/10 border-purple-500/50 text-slate-900 dark:text-purple-100',
-        };
-
-        return (
-          <div
-            key={index}
-            className={`border-l-4 p-4 rounded-r-lg mb-4 ${
-              calloutColors[content.calloutType || 'info']
-            }`}
-          >
-            <p className="font-medium">{content.content as string}</p>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="space-y-4">
-        <Link to={`/modules/${module.id}`}>
-          <Button variant="ghost" className="gap-2">
-            <ArrowLeft className="h-4 w-4" /> Back to {module.title}
-          </Button>
-        </Link>
-
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Badge>{module.category}</Badge>
-            <Badge variant="outline">{lesson.estimatedTime} min</Badge>
-            <Badge variant="secondary">{lesson.bloomLevel}</Badge>
-          </div>
-          <h1 className="text-3xl font-bold mb-2">{lesson.title}</h1>
-          <p className="text-lg text-muted-foreground">{lesson.description}</p>
-        </div>
-      </div>
-
-      {/* Learning Objectives */}
-      <Card className="p-6">
-        <div className="flex items-center gap-2 mb-3">
-          <BookOpen className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold">Learning Objectives</h2>
-        </div>
-        <ul className="space-y-2">
-          {lesson.objectives.map((objective, index) => (
-            <li key={index} className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-              <span>{objective}</span>
-            </li>
+        <div className="max-w-3xl">
+          {lesson.blocks.map((b, i) => (
+            <BlockView key={i} block={b} />
           ))}
-        </ul>
-      </Card>
-
-      {/* Lesson Content */}
-      <Card className="p-6">
-        <div className="prose prose-slate dark:prose-invert max-w-none">
-          {lesson.content.map((content, index) => renderContent(content, index))}
         </div>
-      </Card>
 
-      {/* Completion Button */}
-      <div className="flex justify-end">
-        <Button
-          onClick={handleComplete}
-          disabled={isCompleted}
-          className="gap-2"
-          size="lg"
-        >
-          {isCompleted ? (
-            <>
-              <CheckCircle2 className="h-5 w-5" />
-              Completed
-            </>
+        <section className="mt-10 max-w-3xl rounded-lg border border-primary/30 bg-primary/5 p-5">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-primary">Bottom line</h2>
+          <ul className="space-y-2">
+            {lesson.takeaways.map((t) => (
+              <li key={t} className="flex gap-2 text-sm">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                {t}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <div className="mt-8 max-w-3xl">
+          <RefList ids={lesson.refs} />
+        </div>
+
+        <div className="mt-10 flex max-w-3xl flex-wrap items-center gap-3 border-t pt-6">
+          {done ? (
+            <Button variant="outline" onClick={() => uncompleteLesson(lesson.id)}>
+              <RotateCcw className="h-4 w-4" /> Mark as not done
+            </Button>
           ) : (
-            'Mark as Complete'
+            <Button onClick={() => completeLesson(lesson.id)}>
+              <CheckCircle2 className="h-4 w-4" /> Mark complete
+            </Button>
           )}
-        </Button>
-      </div>
+          <div className="ml-auto flex gap-2">
+            {prev && (
+              <Link to={`/lessons/${prev.id}`}>
+                <Button variant="ghost" aria-label={`Previous: ${prev.title}`}>
+                  <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Previous</span>
+                </Button>
+              </Link>
+            )}
+            {next && (
+              <Link to={`/lessons/${next.id}`} onClick={() => !done && completeLesson(lesson.id)}>
+                <Button variant="secondary" aria-label={`Next: ${next.title}`}>
+                  <span className="max-w-[12rem] truncate">Next: {next.title}</span> <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      </article>
+
+      {headings.length > 2 && (
+        <nav className="no-print hidden lg:block" aria-label="On this page">
+          <div className="sticky top-20 space-y-1 text-sm">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">On this page</p>
+            {headings.map((hd) => (
+              <a key={hd.text} href={`#${slug(hd.text)}`} className="block truncate py-0.5 text-muted-foreground hover:text-foreground">
+                {hd.text}
+              </a>
+            ))}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }
