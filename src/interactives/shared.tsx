@@ -113,11 +113,11 @@ export function Slider({
   const pct = (x: number) => ((x - min) / (max - min)) * 100;
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <label htmlFor={id} className="text-sm font-medium">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+        <label htmlFor={id} className="min-w-0 text-sm font-medium">
           {label}
         </label>
-        <div className="flex items-center gap-1">
+        <div className="ml-auto flex min-w-0 items-center gap-1">
           <input
             type="number"
             aria-label={`${label} value`}
@@ -129,9 +129,9 @@ export function Slider({
               const v = Number(e.target.value);
               if (Number.isFinite(v)) onChange(Math.min(max, Math.max(min, v)));
             }}
-            className={cn('w-20 rounded border bg-card px-1.5 py-0.5 text-right text-sm font-semibold tabular', abnormal ? 'text-destructive' : 'text-foreground')}
+            className={cn('w-[4.75rem] rounded border bg-card px-1.5 py-0.5 text-right text-sm font-semibold tabular', abnormal ? 'text-destructive' : 'text-foreground')}
           />
-          {unit && <span className="w-16 text-xs text-muted-foreground">{unit}</span>}
+          {unit && <span className="whitespace-nowrap text-xs text-muted-foreground">{unit}</span>}
         </div>
       </div>
       <div className="relative">

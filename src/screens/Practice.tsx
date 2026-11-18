@@ -100,7 +100,9 @@ function ModeCard({ to, icon: Icon, title, text, cta, disabled }: { to: string; 
 }
 
 export function QuizSession() {
-  const { mode, moduleId } = useParams();
+  const params = useParams();
+  const moduleId = params.moduleId;
+  const mode = moduleId ? 'module' : params.mode;
   const navigate = useNavigate();
   const { progress, recordAnswer, recordSession } = useAppStore();
   const [seed] = useState(() => Date.now() % 100000);

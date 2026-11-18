@@ -200,7 +200,8 @@ describe('specimen artifacts', () => {
   it('EDTA contamination: K up, Ca down', () => {
     const r = applyArtifacts(truth, { ...NO_ARTIFACTS, edtaFraction: 0.3 });
     expect(r.k).toBeGreaterThan(6.5);
-    expect(r.ca).toBeLessThan(5);
+    expect(r.ca).toBeLessThan(6);
+    expect(r.mg).toBeLessThan(truth.mg * 0.8);
     expect(detectClues(r, truth, { ...NO_ARTIFACTS, edtaFraction: 0.3 }).join(' ')).toMatch(/EDTA/);
   });
   it('D5W contamination mixes exactly', () => {

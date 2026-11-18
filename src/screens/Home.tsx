@@ -132,7 +132,14 @@ export function Home() {
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold leading-tight">{m.title}</h3>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          {m.lessons.length} lessons · {m.cases.length} cases · {m.interactives.length} labs
+                          {[
+                            [m.lessons.length, 'lesson'],
+                            [m.cases.length, 'case'],
+                            [m.interactives.length, 'lab'],
+                          ]
+                            .filter(([n]) => (n as number) > 0)
+                            .map(([n, w]) => `${n} ${w}${n === 1 ? '' : 's'}`)
+                            .join(' · ')}
                         </p>
                       </div>
                       <Ring value={mm.mastery} className={hue.ring}>

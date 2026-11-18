@@ -115,14 +115,12 @@ export function applyArtifacts(truth: Panel, a: Artifacts): Panel {
   if (a.edtaFraction > 0) {
     const f = a.edtaFraction;
     p.k += 9 * f;
-    let edta = 4.5 * f; // mmol/L
+    const edta = 4.5 * f; // mmol/L chelating capacity, shared by Ca²⁺ and Mg²⁺ in proportion to concentration
     const caMmol = p.ca * 0.2495;
-    const caBound = Math.min(caMmol * 0.95, edta);
-    p.ca = (caMmol - caBound) / 0.2495;
-    edta -= caBound;
     const mgMmol = p.mg * 0.4114;
-    const mgBound = Math.min(mgMmol * 0.9, edta);
-    p.mg = (mgMmol - mgBound) / 0.4114;
+    const caShare = caMmol / (caMmol + mgMmol);
+    p.ca = Math.max(caMmol * 0.05, caMmol - edta * caShare) / 0.2495;
+    p.mg = Math.max(mgMmol * 0.1, mgMmol - edta * (1 - caShare)) / 0.4114;
     p.alp *= Math.max(0.15, 1 - 4 * f);
   }
 

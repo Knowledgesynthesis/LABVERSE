@@ -1,73 +1,75 @@
-# React + TypeScript + Vite
+# LabVerse — Clinical Chemistry, Connected
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An interactive, evidence-based course that teaches clinical chemistry as one connected system — for medical students, residents, fellows and laboratory professionals. Works offline, needs no account, and stores progress only in the browser.
 
-Currently, two official plugins are available:
+## What's inside
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+| | |
+|---|---|
+| **9 modules, 28 lessons** | Water/sodium/potassium · acid–base · kidney · liver · endocrine · calcium/phosphate/magnesium · cardiac & metabolic biomarkers · integrated panels & emergencies · laboratory error & quality |
+| **137 questions** | 71 board-style questions (MCQ and numeric), most embedded in lessons as retrieval checks, plus 66 case steps. Options are shuffled on every attempt. |
+| **18 stepwise cases** | One decision at a time with immediate feedback, saved scores, SI/conventional unit toggle — including spurious results that must *not* be treated |
+| **9 simulators** | Acid–base map · osmolality & anion gap · sodium correction planner · kidney function (CKD-EPI 2021, cystatin C, KDIGO heat map, FENa/FEUrea) · AKI creatinine kinetics · liver pattern explorer (R ratio, Hy's law, FIB-4, MELD 3.0, Child–Pugh) · endocrine axes · specimen integrity (pre-analytic artifacts, mystery mode) · QC/Westgard trainer (Sigma, RCV) |
+| **Spaced review** | Leitner scheduling (missed → now; correct → 1, 3, 7, 16, 35 days), weak-spot drills, mixed 20-question exams, per-module mastery |
+| **Systems map, glossary, search** | 24 analytes and 39 mechanistic links; 90-term glossary; Ctrl/⌘-K search across everything |
+| **Evidence library** | 87 sources (guidelines, consensus statements, trials, CLSI/EFLM standards), each linked to the lessons and cases that use it |
 
-## React Compiler
+## Evidence standard
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Content was reviewed against current guidance in November 2026, including KDIGO 2024 CKD (race-free CKD-EPI 2021), the 2024 ADA/EASD/JBDS/AACE/DTS hyperglycemic-crises consensus, the 2025 Endocrine Society primary-aldosteronism guideline, assay-specific cortisol cut-offs, MELD 3.0 (OPTN), ESC 2023 ACS 0 h/1 h algorithms, the ESC/EAS 2025 Lp(a) update, ACG 2024 pancreatitis, ASPEN 2020 refeeding, UKKA hyperkalaemia guidance, and the 2025 meta-analysis on hyponatremia correction rates. Where guidance is in flux (e.g., the KDIGO 2026 AKI/AKD draft), lessons say so.
 
-## Expanding the ESLint configuration
+Every case's lab panel is machine-checked for internal consistency (Henderson–Hasselbalch, anion gap, osmolality), and every simulator is driven by the same tested calculation library.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Development
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm ci
+npm run dev        # http://localhost:5173
+npm run check      # type-check + lint + tests
+npm run build      # production build with service worker (dist/)
+npm run preview
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Requires Node 20+.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Project layout
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+src/
+  content/            curriculum as data
+    modules/*.ts      lessons, questions and cases per module
+    references.ts     evidence library
+    glossary.ts, systemsMap.ts, modules.ts
+    content.test.ts   integrity + physiology-consistency tests
+  lib/clinical/       pure, unit-tested calculations (acid–base, sodium, eGFR,
+                      creatinine kinetics, liver scores, QC rules, specimen artifacts)
+  interactives/       the nine simulators (lazy-loaded)
+  screens/            pages
+  components/         UI, lesson block renderer, question card, layout
+  store/              persisted progress + spaced repetition (zustand)
+```
+
+### Authoring content
+
+Lessons are arrays of blocks built with helpers in `src/content/dsl.ts`:
+
+```ts
+blocks: [
+  h('Section heading'),
+  p('Text with **bold** and *italic*.'),
+  formula('AG = Na⁺ − (Cl⁻ + HCO₃⁻)', ['where…'], 'note'),
+  pearl('…'), pitfall('…'), danger('…'), evidence('…'),
+  check('question-id'),          // embeds a question from the module bank
+  lab('acid-base-simulator', '…'),
+]
+```
+
+Every lesson needs objectives, takeaways, at least one `check` and at least one reference; `npm test` enforces this along with cross-reference resolution, answer-key validity and case-panel arithmetic.
+
+## Deployment
+
+Deployed on Vercel from `main` (static Vite build; `vercel.json` rewrites all routes to `index.html` for client-side routing). The service worker precaches the app for offline use and updates automatically.
+
+---
+
+LabVerse is a learning resource. Verify management against local protocols and your laboratory's reference intervals.

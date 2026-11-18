@@ -19,7 +19,7 @@ import { LabShell, Panel, Slider, Toggle } from './shared';
 
 const MYSTERIES: { id: string; label: string; make: (r: () => number) => Partial<Artifacts> }[] = [
   { id: 'hemolysis', label: 'In vitro hemolysis', make: (r) => ({ hemolysisGL: 2 + Math.round(r() * 4) }) },
-  { id: 'edta', label: 'K₂EDTA contamination', make: (r) => ({ edtaFraction: 0.15 + r() * 0.15 }) },
+  { id: 'edta', label: 'K₂EDTA contamination', make: (r) => ({ edtaFraction: 0.22 + r() * 0.08 }) },
   { id: 'saline', label: 'Saline drip-arm contamination', make: (r) => ({ fluid: 'ns', fluidFraction: 0.15 + r() * 0.2 }) },
   { id: 'dextrose', label: 'Dextrose drip-arm contamination', make: (r) => ({ fluid: 'd5w', fluidFraction: 0.1 + r() * 0.15 }) },
   { id: 'delay', label: 'Delayed processing (room temp)', make: (r) => ({ delayHours: 6 + Math.round(r() * 10), storage: 'room' }) },
