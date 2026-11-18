@@ -1,231 +1,205 @@
-// Learner levels
-export type LearnerLevel = 'medical-student' | 'resident' | 'fellow' | 'attending' | 'pathologist';
-
-// Module categories
-export type ModuleCategory =
+export type ModuleId =
   | 'electrolytes'
   | 'acid-base'
   | 'renal'
   | 'hepatic'
   | 'endocrine'
-  | 'metabolic'
+  | 'minerals'
+  | 'cardiac'
   | 'integrated'
   | 'lab-errors';
 
-// Bloom's taxonomy levels
 export type BloomLevel = 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create';
 
-// Lab value with units and reference ranges
-export interface LabValue {
-  id: string;
-  name: string;
-  abbreviation: string;
-  value?: number;
-  unit: string;
-  referenceRange: {
-    min: number;
-    max: number;
-    criticalLow?: number;
-    criticalHigh?: number;
-  };
-  category: string;
-  description?: string;
-}
-
-// Module structure
 export interface Module {
-  id: string;
+  id: ModuleId;
   title: string;
-  category: ModuleCategory;
+  short: string;
   description: string;
-  icon: string;
-  prerequisites: string[]; // IDs of prerequisite modules
-  learnerLevels: LearnerLevel[];
-  bloomLevel: BloomLevel;
-  estimatedTime: number; // in minutes
-  lessons: string[]; // Lesson IDs
-  interactives: string[]; // Interactive IDs
-  cases: string[]; // Case IDs
-  assessments: string[]; // Assessment IDs
+  /** Tailwind-friendly hue used for accents (see lib/moduleStyle). */
+  hue: 'sky' | 'violet' | 'teal' | 'amber' | 'rose' | 'lime' | 'red' | 'indigo' | 'orange';
+  prerequisites: ModuleId[];
+  outcomes: string[];
+  lessons: string[];
+  cases: string[];
+  interactives: string[];
   order: number;
 }
 
-// Lesson content
+export type CalloutTone = 'pearl' | 'pitfall' | 'danger' | 'evidence' | 'info';
+
+export type Block =
+  | { type: 'h'; text: string }
+  | { type: 'h3'; text: string }
+  | { type: 'p'; text: string }
+  | { type: 'ul'; items: string[] }
+  | { type: 'ol'; items: string[] }
+  | { type: 'table'; headers: string[]; rows: string[][]; caption?: string }
+  | { type: 'formula'; expr: string; where?: string[]; note?: string }
+  | { type: 'callout'; tone: CalloutTone; title?: string; text: string }
+  | { type: 'check'; id: string }
+  | { type: 'steps'; title?: string; steps: { title: string; detail?: string }[] }
+  | { type: 'lab'; id: string; text: string };
+
 export interface Lesson {
   id: string;
-  moduleId: string;
+  moduleId: ModuleId;
   title: string;
-  description: string;
-  content: LessonContent[];
+  summary: string;
+  minutes: number;
+  bloom: BloomLevel;
   objectives: string[];
-  bloomLevel: BloomLevel;
-  estimatedTime: number;
-  prerequisites: string[];
-  order: number;
+  blocks: Block[];
+  takeaways: string[];
+  refs: string[];
 }
 
-export interface LessonContent {
-  type: 'text' | 'heading' | 'list' | 'image' | 'table' | 'formula' | 'callout';
-  content: string | string[] | TableContent;
-  level?: number; // for headings
-  calloutType?: 'info' | 'warning' | 'success' | 'error' | 'clinical-pearl';
-}
-
-export interface TableContent {
-  headers: string[];
-  rows: string[][];
-}
-
-// Interactive simulators
-export interface Interactive {
+export interface McqQuestion {
+  kind: 'mcq';
   id: string;
-  moduleId: string;
+  stem: string;
+  options: string[];
+  answer: number;
+  explanation: string;
+}
+
+export interface NumericQuestion {
+  kind: 'numeric';
+  id: string;
+  stem: string;
+  value: number;
+  tolerance: number;
+  unit?: string;
+  explanation: string;
+}
+
+export type QuestionBody = McqQuestion | NumericQuestion;
+
+export type Question = QuestionBody & {
+  moduleId: ModuleId;
+  difficulty: 1 | 2 | 3;
+  tags: string[];
+  refs?: string[];
+};
+
+export type AnalyteKey =
+  | 'glucose'
+  | 'bun'
+  | 'creatinine'
+  | 'calcium'
+  | 'magnesium'
+  | 'phosphate'
+  | 'bilirubin'
+  | 'albumin'
+  | 'protein'
+  | 'cholesterol'
+  | 'triglycerides'
+  | 'ft4'
+  | 'ft3'
+  | 'cortisol'
+  | 'urate'
+  | 'ammonia'
+  | 'pco2'
+  | 'ethanol'
+  | 'hba1c';
+
+export interface CaseLab {
+  name: string;
+  value: number | string;
+  unit: string;
+  /** Reference interval used for flagging (conventional units). */
+  low?: number;
+  high?: number;
+  /** Free-text interval when a numeric one does not fit (e.g., "negative"). */
+  refText?: string;
+  analyte?: AnalyteKey;
+  note?: string;
+}
+
+export interface CasePanel {
   title: string;
-  description: string;
-  type: 'electrolyte-dynamics' | 'acid-base' | 'renal-handling' | 'hepatic-pattern' | 'endocrine-axes' | 'analyzer-error';
-  parameters: InteractiveParameter[];
-  outputs: InteractiveOutput[];
-  presets: InteractivePreset[];
-  instructions: string[];
-  learningPoints: string[];
+  labs: CaseLab[];
 }
 
-export interface InteractiveParameter {
-  id: string;
-  name: string;
-  unit: string;
-  min: number;
-  max: number;
-  default: number;
-  step: number;
-  description: string;
-}
-
-export interface InteractiveOutput {
-  id: string;
-  name: string;
-  unit: string;
-  formula?: string; // For display purposes
-  description: string;
-  normalRange?: {
-    min: number;
-    max: number;
-  };
-}
-
-export interface InteractivePreset {
-  id: string;
-  name: string;
-  description: string;
-  values: Record<string, number>;
-  expectedLearning: string;
-}
-
-// Clinical cases
 export interface ClinicalCase {
   id: string;
-  moduleId: string;
+  moduleId: ModuleId;
   title: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  difficulty: 'core' | 'intermediate' | 'advanced';
+  mustNotMiss?: boolean;
   presentation: string;
-  labValues: LabValue[];
-  questions: CaseQuestion[];
+  panels: CasePanel[];
+  steps: QuestionBody[];
   diagnosis: string;
   reasoning: string;
-  learningPoints: string[];
-  mustNotMiss?: boolean;
+  takeaways: string[];
+  refs: string[];
 }
 
-export interface CaseQuestion {
-  id: string;
-  question: string;
-  type: 'mcq' | 'short-answer' | 'interpretation';
-  options?: string[];
-  correctAnswer: string | number;
-  explanation: string;
-}
-
-// Assessment items
-export interface Assessment {
-  id: string;
-  moduleId: string;
-  title: string;
-  description: string;
-  questions: AssessmentQuestion[];
-  passingScore: number; // percentage
-  timeLimit?: number; // in minutes
-}
-
-export interface AssessmentQuestion {
-  id: string;
-  type: 'mcq' | 'multi-select' | 'drag-drop' | 'interpretation' | 'free-text';
-  question: string;
-  options?: string[];
-  correctAnswer: string | string[] | number[];
-  explanation: string;
-  rationale: string;
-  bloomLevel: BloomLevel;
-  points: number;
-}
-
-// Glossary
 export interface GlossaryTerm {
   id: string;
   term: string;
-  abbreviation?: string;
-  definition: string;
+  abbr?: string;
   category: string;
-  relatedTerms: string[]; // IDs of related terms
-  clinicalRelevance?: string;
+  definition: string;
+  clinical?: string;
+  related: string[];
+  lessonId?: string;
 }
 
-// User progress tracking
-export interface UserProgress {
-  userId?: string; // Optional for offline use
-  lessonsCompleted: string[];
-  interactivesCompleted: string[];
-  casesCompleted: string[];
-  assessmentScores: Record<string, AssessmentScore>;
-  totalTimeSpent: number; // in minutes
-  currentStreak: number; // days
-  lastAccessDate: string;
-  achievements: Achievement[];
+export interface Reference {
+  id: string;
+  citation: string;
+  url: string;
+  kind: 'guideline' | 'trial' | 'review' | 'standard' | 'consensus' | 'study';
+  year: number;
 }
 
-export interface AssessmentScore {
-  assessmentId: string;
-  score: number;
-  totalPoints: number;
-  completedAt: string;
-  attempts: number;
-}
-
-export interface Achievement {
+export interface InteractiveMeta {
   id: string;
   title: string;
-  description: string;
-  unlockedAt: string;
-  icon: string;
+  summary: string;
+  moduleId: ModuleId;
+  skills: string[];
 }
 
-// Theme and settings
+export interface QuestionStat {
+  box: number;
+  due: string;
+  attempts: number;
+  correct: number;
+  lastResult: boolean;
+  lastAt: string;
+}
+
+export interface CaseResult {
+  score: number;
+  total: number;
+  completedAt: string;
+}
+
+export interface QuizSession {
+  id: string;
+  mode: string;
+  moduleId?: ModuleId;
+  score: number;
+  total: number;
+  at: string;
+}
+
+export interface Progress {
+  lessons: Record<string, string>;
+  cases: Record<string, CaseResult>;
+  labs: Record<string, string>;
+  questions: Record<string, QuestionStat>;
+  sessions: QuizSession[];
+  activeDays: string[];
+  lastLocation?: { path: string; title: string; at: string };
+}
+
 export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
-  fontSize: 'small' | 'medium' | 'large';
-  highContrast: boolean;
+  textSize: 'sm' | 'md' | 'lg';
   reduceMotion: boolean;
-  offlineMode: boolean;
-  notificationsEnabled: boolean;
-}
-
-// Error types for analyzer module
-export interface AnalyzerError {
-  id: string;
-  type: 'pre-analytic' | 'analytic' | 'post-analytic';
-  name: string;
-  description: string;
-  causes: string[];
-  effects: string[];
-  prevention: string[];
-  examples: string[];
+  units: 'conventional' | 'si';
 }

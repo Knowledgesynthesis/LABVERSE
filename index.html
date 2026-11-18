@@ -1,14 +1,34 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="LabVerse - Interactive Clinical Chemistry Education Platform for medical students, residents, and clinical pathologists" />
-    <title>LabVerse - Clinical Chemistry Education</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta
+      name="description"
+      content="LabVerse — evidence-based, interactive clinical chemistry. Electrolytes, acid–base, kidney, liver, endocrine, minerals, biomarkers and lab quality, with simulators, cases and spaced review."
+    />
+    <meta property="og:title" content="LabVerse — Clinical Chemistry, Connected" />
+    <meta property="og:description" content="Read any lab panel like an expert: lessons, simulators, stepwise cases and spaced review, built on current guidelines." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <title>LabVerse — Clinical Chemistry, Connected</title>
+    <script>
+      try {
+        var s = JSON.parse(localStorage.getItem('labverse-storage') || '{}').state || {};
+        var t = (s.settings && s.settings.theme) || 'dark';
+        var dark = t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', dark);
+        if (s.settings && s.settings.textSize) document.documentElement.dataset.text = s.settings.textSize;
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>LabVerse needs JavaScript to run.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

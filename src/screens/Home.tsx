@@ -1,162 +1,176 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Clock, CheckCircle2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { modules } from '../data';
+import { ArrowRight, BrainCircuit, Flame, FlaskConical, Network, OctagonAlert, Play, Stethoscope, Target } from 'lucide-react';
+import { cases, interactives, lessonById, lessons, modules, questions } from '../content';
 import useAppStore from '../store';
+import { dueQuestionIds, moduleMastery, nextLesson, streak } from '../lib/mastery';
+import { HUE, MODULE_ICON } from '../lib/moduleStyle';
+import { Card, CardContent } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Ring } from '../components/ui/ProgressBar';
+import { cn } from '../lib/utils';
 
 export function Home() {
-  const { progress } = useAppStore();
-
-  const getModuleProgress = (moduleId: string) => {
-    const module = modules.find((m) => m.id === moduleId);
-    if (!module) return 0;
-
-    const completedLessons = module.lessons.filter((lessonId) =>
-      progress.lessonsCompleted.includes(lessonId)
-    ).length;
-
-    return module.lessons.length > 0
-      ? Math.round((completedLessons / module.lessons.length) * 100)
-      : 0;
-  };
+  const progress = useAppStore((s) => s.progress);
+  const next = nextLesson(progress);
+  const due = dueQuestionIds(progress).length;
+  const answered = Object.values(progress.questions);
+  const accuracy = answered.length ? Math.round((100 * answered.filter((q) => q.lastResult).length) / answered.length) : null;
+  const started = Object.keys(progress.lessons).length + answered.length + Object.keys(progress.cases).length > 0;
+  const last = progress.lastLocation;
 
   return (
     <div className="space-y-8">
-      {/* Hero Section */}
-      <div className="text-center space-y-4 py-8">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-          Welcome to LabVerse
+      <section className="relative overflow-hidden rounded-2xl border bg-card p-6 md:p-10">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-gradient-to-br from-indigo-500/25 to-sky-500/10 blur-3xl" aria-hidden />
+        <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">Clinical chemistry, connected</p>
+        <h1 className="max-w-2xl text-3xl font-bold tracking-tight md:text-4xl">
+          Read any lab panel the way an expert does — and know why.
         </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Master clinical chemistry through interactive simulations, integrated
-          learning modules, and real-world cases.
+        <p className="mt-3 max-w-2xl text-muted-foreground">
+          Evidence-based lessons with built-in retrieval practice, simulators that obey real physiology, stepwise cases, and spaced review that
+          brings back what you are about to forget.
         </p>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Lessons Completed
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {progress.lessonsCompleted.length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Cases Solved
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {progress.casesCompleted.length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Time Spent
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {Math.round(progress.totalTimeSpent)} min
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Learning Modules */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Learning Modules</h2>
-          <Link to="/modules">
-            <Button variant="ghost" className="gap-2">
-              View All <ArrowRight className="h-4 w-4" />
+        <div className="mt-6 flex flex-wrap gap-3">
+          {next ? (
+            <Link to={`/lessons/${next.id}`}>
+              <Button size="lg">
+                <Play className="h-4 w-4" />
+                {started ? 'Continue' : 'Start'}: {next.title}
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/practice">
+              <Button size="lg">
+                <BrainCircuit className="h-4 w-4" /> Curriculum complete — keep it fresh
+              </Button>
+            </Link>
+          )}
+          <Link to="/interactives">
+            <Button size="lg" variant="outline">
+              <FlaskConical className="h-4 w-4" /> Explore the labs
             </Button>
           </Link>
         </div>
+        <dl className="mt-8 grid grid-cols-2 gap-4 text-sm sm:grid-cols-5">
+          {[
+            ['Modules', modules.length],
+            ['Lessons', lessons.length],
+            ['Questions', questions.length + cases.reduce((a, c) => a + c.steps.length, 0)],
+            ['Cases', cases.length],
+            ['Simulators', interactives.length],
+          ].map(([k, v]) => (
+            <div key={k}>
+              <dt className="text-muted-foreground">{k}</dt>
+              <dd className="text-2xl font-bold tabular">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {modules.map((module) => {
-            const progressPercent = getModuleProgress(module.id);
-            const isCompleted = progressPercent === 100;
+      {started && (
+        <section className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardContent className="flex items-center gap-4 pt-5">
+              <BrainCircuit className="h-9 w-9 text-primary" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-muted-foreground">Due for review</p>
+                <p className="text-2xl font-bold tabular">{due}</p>
+              </div>
+              <Link to="/practice/review">
+                <Button size="sm" disabled={!due}>
+                  Review
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-4 pt-5">
+              <Target className="h-9 w-9 text-success" />
+              <div>
+                <p className="text-sm text-muted-foreground">Question accuracy (latest attempt)</p>
+                <p className="text-2xl font-bold tabular">{accuracy === null ? '—' : `${accuracy}%`}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-4 pt-5">
+              <Flame className="h-9 w-9 text-orange-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Day streak</p>
+                <p className="text-2xl font-bold tabular">{streak(progress.activeDays)}</p>
+              </div>
+              {last && (
+                <Link to={last.path} className="ml-auto max-w-[45%] truncate text-right text-xs text-primary hover:underline">
+                  Resume: {last.title}
+                </Link>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
+      <section>
+        <div className="mb-4 flex items-end justify-between">
+          <h2 className="text-xl font-bold tracking-tight">Modules</h2>
+          <Link to="/learn" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+            Full curriculum <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {modules.map((m) => {
+            const Icon = MODULE_ICON[m.id];
+            const hue = HUE[m.hue];
+            const mm = moduleMastery(m, progress);
             return (
-              <Link key={module.id} to={`/modules/${module.id}`}>
-                <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="text-3xl">{module.icon}</div>
-                        <div>
-                          <CardTitle className="text-lg">{module.title}</CardTitle>
-                        </div>
+              <Link key={m.id} to={`/modules/${m.id}`} className="group">
+                <Card className="h-full transition-all group-hover:-translate-y-0.5 group-hover:shadow-md">
+                  <CardContent className="flex h-full flex-col gap-3 pt-5">
+                    <div className="flex items-start gap-3">
+                      <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg', hue.soft)}>
+                        <Icon className={cn('h-5 w-5', hue.text)} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold leading-tight">{m.title}</h3>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {[
+                            [m.lessons.length, 'lesson'],
+                            [m.cases.length, 'case'],
+                            [m.interactives.length, 'lab'],
+                          ]
+                            .filter(([n]) => (n as number) > 0)
+                            .map(([n, w]) => `${n} ${w}${n === 1 ? '' : 's'}`)
+                            .join(' · ')}
+                        </p>
                       </div>
-                      {isCompleted && (
-                        <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      )}
+                      <Ring value={mm.mastery} className={hue.ring}>
+                        {mm.mastery}
+                      </Ring>
                     </div>
-                    <CardDescription className="mt-2">
-                      {module.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      <span>{module.estimatedTime} min</span>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary">{module.category}</Badge>
-                      <Badge variant="outline">{module.lessons.length} lessons</Badge>
-                    </div>
-
-                    {progressPercent > 0 && (
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">Progress</span>
-                          <span className="font-medium">{progressPercent}%</span>
-                        </div>
-                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary transition-all"
-                            style={{ width: `${progressPercent}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
+                    <p className="text-sm text-muted-foreground">{m.description}</p>
+                    <p className={cn('mt-auto text-xs font-medium', mm.level === 'Not started' ? 'text-muted-foreground' : hue.text)}>{mm.level}</p>
                   </CardContent>
                 </Card>
               </Link>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* Call to Action */}
-      <Card className="bg-primary/5 border-primary/20">
-        <CardHeader>
-          <CardTitle>Ready to dive deeper?</CardTitle>
-          <CardDescription>
-            Explore interactive simulations that bring clinical chemistry to life
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link to="/interactives">
-            <Button>Explore Interactive Labs</Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <section className="grid gap-4 md:grid-cols-3">
+        <QuickLink to="/map" icon={Network} title="Systems Map" text="See how sodium, potassium, acid–base, kidney, liver, minerals and hormones constrain each other." />
+        <QuickLink to={`/lessons/must-not-miss`} icon={OctagonAlert} title={lessonById['must-not-miss'].title} text="Fourteen chemistry patterns that need action within the hour." />
+        <QuickLink to="/cases" icon={Stethoscope} title="Clinical cases" text="Stepwise cases with immediate feedback — including spurious results that should not be treated." />
+      </section>
     </div>
+  );
+}
+
+function QuickLink({ to, icon: Icon, title, text }: { to: string; icon: typeof Network; title: string; text: string }) {
+  return (
+    <Link to={to} className="group rounded-lg border bg-card p-5 transition-colors hover:bg-accent/50">
+      <Icon className="mb-3 h-6 w-6 text-primary" />
+      <p className="font-semibold">{title}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{text}</p>
+    </Link>
   );
 }
